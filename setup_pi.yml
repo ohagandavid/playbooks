@@ -1,0 +1,75 @@
+---
+- hosts: all
+  vars:
+    COMMON_ROOT_PASSWORD: 'xxx'
+
+    deploy_user_name: ansible
+    deploy_public_keys:
+      - ~/.ssh/id_rsa.pub
+
+    my_packages:
+      -screen
+      -zsh
+      -rpi-update
+      -mg
+      -dropbear
+      -git
+      -unattended-upgrades
+      -docker
+      -etckeeper
+
+    not_my_packages:
+       -vim
+       -nano
+
+  remote_user: root
+  tasks:
+- name: Change root password
+  user: name=root password="{{ COMMON_ROOT_PASSWORD }}"
+
+- user:
+  name: ansible
+    groups: sudo
+
+- name: Add authorized keys for deploy user
+  authorized_key: user={{ deploy_user_name }}
+                  key="{{ lookup('file', item) }}"
+  with_items: deploy_public_keys
+
+- user:
+  name: pi
+    state: absent
+    remove: yes
+
+- name: Upgrade APT to the latest packages
+  apt: upgrade=safe
+
+- name: Update repositories cache and install my packages
+  apt: state=installed pkg={{ item }}
+  with_items: my_packages
+
+- name: Remove package
+  apt: state=absent pkg={{ item }}
+  with_items: not_my_packages
+	
+- name: Update all packages to the latest version
+  apt:
+    upgrade: dist
+
+- name: Update firmware
+  command: rpi-update
+
+- name: Disallow password authentication
+  lineinfile: dest=/etc/ssh/sshd_config
+              regexp="^PasswordAuthentication"
+              line="PasswordAuthentication no"
+              state=present
+  notify: Restart ssh
+
+- name: Disallow root SSH access
+  lineinfile: dest=/etc/ssh/sshd_config
+              regexp="^PermitRootLogin"
+              line="PermitRootLogin no"
+              state=present
+  notify: Restart ssh
+

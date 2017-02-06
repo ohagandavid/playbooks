@@ -29,7 +29,7 @@
 
 - user:
   name: ansible
-    groups: sudo
+    group: sudo
 
 - name: Add authorized keys for deploy user
   authorized_key: user={{ deploy_user_name }}

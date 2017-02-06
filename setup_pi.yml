@@ -29,7 +29,7 @@
 
 - user:
   name: ansible
-    group: sudo
+  group: sudo
 
 - name: Add authorized keys for deploy user
   authorized_key: user={{ deploy_user_name }}
@@ -38,8 +38,8 @@
 
 - user:
   name: pi
-    state: absent
-    remove: yes
+  state: absent
+  remove: yes
 
 - name: Upgrade APT to the latest packages
   apt: upgrade=safe
@@ -51,7 +51,7 @@
 - name: Remove package
   apt: state=absent pkg={{ item }}
   with_items: not_my_packages
-	
+
 - name: Update all packages to the latest version
   apt:
     upgrade: dist
